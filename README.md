@@ -3,10 +3,10 @@
 
 # Установка
 Для запуска достаточно создать env файл с параметрами:
-```DATABASE_PASSWORD``` - пароль к бд redis
-```DATABASE_HOST``` - адрес бд redis
-```DATABASE_PORT`` - порт бд redis
-```TELEGRAM_TOKEN``` - токен телеграм бота
+- `DATABASE_PASSWORD` - пароль к бд redis
+- `DATABASE_HOST` - адрес бд redis
+- `DATABASE_PORT` - порт бд redis
+- `TELEGRAM_TOKEN` - токен телеграм бота
 
 ## Токен telegram-бота
 Для создания телеграм бота напишите боту [BotFather](https://t.me/BotFather), там вы создадите бота, и вам будет выдан токен бота.
