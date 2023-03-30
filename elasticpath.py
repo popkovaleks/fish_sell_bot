@@ -15,7 +15,7 @@ def access_token_is_expired():
 
 
 def get_access_token():
-    if access_token_is_expired() is True:
+    if access_token_is_expired():
         url = "https://api.moltin.com/oauth/access_token"
 
         payload='client_id=GzfRZv0lswGiw2D56fyxQ8Abw8i2m9s9HJU1xHTgQU&client_secret=MTo6d1YMLqkqLH3CrJWYsz42DpndKJwkCyJP3dWBQT&grant_type=client_credentials'
