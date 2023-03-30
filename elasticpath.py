@@ -3,7 +3,7 @@ import json
 import time
 
 
-def access_token_is_expired():
+def is_access_token_expired():
     try:
         with open("access_data.json", "r") as access_file:
             access_data = json.loads(access_file.read())
@@ -13,7 +13,7 @@ def access_token_is_expired():
 
 
 def get_access_token():
-    if access_token_is_expired():
+    if is_access_token_expired():
         url = "https://api.moltin.com/oauth/access_token"
 
         payload='client_id=GzfRZv0lswGiw2D56fyxQ8Abw8i2m9s9HJU1xHTgQU&client_secret=MTo6d1YMLqkqLH3CrJWYsz42DpndKJwkCyJP3dWBQT&grant_type=client_credentials'
