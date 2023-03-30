@@ -7,9 +7,7 @@ def access_token_is_expired():
     try:
         with open("access_data.json", "r") as access_file:
             access_data = json.loads(access_file.read())
-            if access_data["expires"] < time.time():
-                return True
-            return False
+            return access_data["expires"] < time.time()
     except FileNotFoundError:
         return True
 
