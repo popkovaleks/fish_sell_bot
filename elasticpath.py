@@ -25,7 +25,7 @@ def get_access_token():
             'content-type': 'text/plain'
         }
 
-        response = requests.request("POST", url, headers=headers, data=payload)
+        response = requests.post(url, headers=headers, data=payload)
         with open("access_data.json", "w") as access_file:
             access_file.write(response.text)
         return response.json()["access_token"]
@@ -44,7 +44,7 @@ def get_products(access_token):
         'Authorization': f'Bearer {access_token}'
     }
 
-    response = requests.request("GET", url, headers=headers)
+    response = requests.get(url, headers=headers)
     response_data = response.json()["data"]
 
     products = [{
@@ -87,7 +87,7 @@ def get_items_in_cart(access_token, chat_id):
         'Authorization': f'Bearer {access_token}'
     }
 
-    response = requests.request("GET", url, headers=headers)
+    response = requests.get(url, headers=headers)
 
     response_data = response.json()["data"]
     items_in_cart = [{
@@ -112,7 +112,7 @@ def get_total_amount_for_cart(access_token, chat_id):
         'Authorization': f'Bearer {access_token}'
     }
 
-    response = requests.request("GET", url, headers=headers)
+    response = requests.get(url, headers=headers)
     response_data = response.json()["data"]
     return response_data["meta"]["display_price"]["with_tax"]["formatted"]
 
@@ -133,7 +133,7 @@ def add_product_to_cart(access_token, chat_id, product_id, quantity):
         'Authorization': f'Bearer {access_token}'
     }
 
-    response = requests.request("POST", url, headers=headers, data=payload)
+    response = requests.post(url, headers=headers, data=payload)
 
 
 def delete_cart_item(access_token, chat_id, id):
@@ -145,7 +145,7 @@ def delete_cart_item(access_token, chat_id, id):
         'Authorization': f'Bearer {access_token}'
     }
 
-    response = requests.request("DELETE", url, headers=headers)
+    response = requests.delete(url, headers=headers)
 
 
 def create_customer(access_token, chat_id, email):
