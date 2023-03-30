@@ -10,9 +10,6 @@ from elasticpath import get_access_token, get_products, get_product, get_file,\
       delete_cart_item, create_customer
 
 
-env = Env()
-env.read_env()
-
 _database = None
 
 
@@ -170,6 +167,9 @@ def get_database_connection():
 
 
 if __name__ == '__main__':
+
+    env = Env()
+    env.read_env()
     
     token = env("TELEGRAM_TOKEN")
     updater = Updater(token, use_context=True)
