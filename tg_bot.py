@@ -60,7 +60,6 @@ def handle_menu(update, context):
         image_url = get_file(access_token, product["image"])
         query.answer()
         
-        context.bot.delete_message(message_id = menu_msg_id, chat_id = chat_id)
         buttons = [[InlineKeyboardButton("1 kg", callback_data=f"1 {product['id']}"), InlineKeyboardButton("5 kg", callback_data=f"5 {product['id']}")],
                 [InlineKeyboardButton("Back", callback_data="back")]]
         keyboard_markup = InlineKeyboardMarkup(buttons)
@@ -68,6 +67,7 @@ def handle_menu(update, context):
                                 photo=image_url,
                                 caption=f"{product['name']}\n{product['description']}",
                                 reply_markup=keyboard_markup)
+        context.bot.delete_message(message_id = menu_msg_id, chat_id = chat_id)
         return "HANDLE_DESCRIPTION"
 
 
@@ -76,10 +76,9 @@ def handle_description(update, context):
     chat_id = query.message.chat_id
     if query.data == "back":
         menu_msg_id = query.message.message_id
-        context.bot.delete_message(message_id = menu_msg_id, chat_id = chat_id)
         reply_markup = show_main_menu()
         context.bot.send_message(text="Please choose", chat_id=query.message.chat_id, reply_markup=reply_markup)
-        
+        context.bot.delete_message(message_id = menu_msg_id, chat_id = chat_id)
         return "HANDLE_MENU"
     else:
         quantity, product_id = query.data.split()
@@ -92,13 +91,15 @@ def handle_cart(update, context):
     query = update.callback_query
     chat_id = query.message.chat_id
     old_msg_id = query.message.message_id
-    context.bot.delete_message(message_id = old_msg_id, chat_id = chat_id)
+    
     if query.data == "back":
         reply_markup = show_main_menu()
         context.bot.send_message(text="Please choose", chat_id=chat_id, reply_markup=reply_markup)
+        context.bot.delete_message(message_id = old_msg_id, chat_id = chat_id)
         return "HANDLE_MENU"
     if query.data == "pay":
         context.bot.send_message(text="Please, send us email to contact you", chat_id=chat_id)
+        context.bot.delete_message(message_id = old_msg_id, chat_id = chat_id)
         return "WAITING_EMAIL"
     else:
         item_in_cart_id = query.data
@@ -106,6 +107,7 @@ def handle_cart(update, context):
         delete_cart_item(access_token, chat_id, item_in_cart_id)
         cart_text, reply_markup = show_cart(access_token, chat_id)
         context.bot.send_message(chat_id=chat_id, text=cart_text, reply_markup=reply_markup)
+        context.bot.delete_message(message_id = old_msg_id, chat_id = chat_id)
         return "HANDLE_CART"
 
 
