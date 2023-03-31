@@ -115,6 +115,7 @@ def waiting_email(update, context):
     users_message = update.message.text
     chat_id = update.message.chat_id
 
+    #regex was taken from https://www.geeksforgeeks.org/check-if-email-address-valid-or-not-in-python/
     regex_email = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'
     if re.fullmatch(regex_email, users_message):
         context.bot.send_message(chat_id=chat_id, text=f"Your email is {users_message}")
