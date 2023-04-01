@@ -4,6 +4,7 @@ import re
 from environs import Env
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Filters, Updater, CallbackQueryHandler, CommandHandler, MessageHandler
+from functools import partial
 
 from elasticpath import get_access_token, get_products, get_product, get_file,\
       add_product_to_cart, get_items_in_cart, get_total_amount_for_cart,\
@@ -13,8 +14,8 @@ from elasticpath import get_access_token, get_products, get_product, get_file,\
 _database = None
 
 
-def show_main_menu():
-    access_token = get_access_token()
+def show_main_menu(db, client_id, client_secret):
+    access_token = get_access_token(db, client_id, client_secret)
     products = get_products(access_token)
     keyboard = [[InlineKeyboardButton(product["name"], callback_data=product["id"])] for product in products]
     keyboard.append([InlineKeyboardButton("Cart", callback_data="cart")])
@@ -38,16 +39,16 @@ def show_cart(access_token, chat_id):
     return cart_text, reply_markup
     
 
-def start(update, context):    
-    reply_markup = show_main_menu()
+def start(update, context, db, client_id, client_secret):    
+    reply_markup = show_main_menu(db, client_id, client_secret)
     update.message.reply_text("Please choose:", reply_markup=reply_markup)
     
     return "HANDLE_MENU"
 
 
-def handle_menu(update, context):
+def handle_menu(update, context, db, client_id, client_secret):
     query = update.callback_query
-    access_token = get_access_token()
+    access_token = get_access_token(db, client_id, client_secret)
     chat_id = query.message.chat_id
     menu_msg_id = query.message.message_id
     if query.data == "cart":
@@ -71,29 +72,29 @@ def handle_menu(update, context):
         return "HANDLE_DESCRIPTION"
 
 
-def handle_description(update, context):
+def handle_description(update, context, db, client_id, client_secret):
     query = update.callback_query
     chat_id = query.message.chat_id
     if query.data == "back":
         menu_msg_id = query.message.message_id
-        reply_markup = show_main_menu()
+        reply_markup = show_main_menu(db, client_id, client_secret)
         context.bot.send_message(text="Please choose", chat_id=query.message.chat_id, reply_markup=reply_markup)
         context.bot.delete_message(message_id = menu_msg_id, chat_id = chat_id)
         return "HANDLE_MENU"
     else:
         quantity, product_id = query.data.split()
-        access_token = get_access_token()
+        access_token = get_access_token(db, client_id, client_secret)
         add_product_to_cart(access_token, chat_id, product_id, int(quantity))
         return "HANDLE_DESCRIPTION"
 
 
-def handle_cart(update, context):
+def handle_cart(update, context, db, client_id, client_secret):
     query = update.callback_query
     chat_id = query.message.chat_id
     old_msg_id = query.message.message_id
     
     if query.data == "back":
-        reply_markup = show_main_menu()
+        reply_markup = show_main_menu(db, client_id, client_secret)
         context.bot.send_message(text="Please choose", chat_id=chat_id, reply_markup=reply_markup)
         context.bot.delete_message(message_id = old_msg_id, chat_id = chat_id)
         return "HANDLE_MENU"
@@ -103,7 +104,7 @@ def handle_cart(update, context):
         return "WAITING_EMAIL"
     else:
         item_in_cart_id = query.data
-        access_token = get_access_token()
+        access_token = get_access_token(db, client_id, client_secret)
         delete_cart_item(access_token, chat_id, item_in_cart_id)
         cart_text, reply_markup = show_cart(access_token, chat_id)
         context.bot.send_message(chat_id=chat_id, text=cart_text, reply_markup=reply_markup)
@@ -111,7 +112,7 @@ def handle_cart(update, context):
         return "HANDLE_CART"
 
 
-def waiting_email(update, context):
+def waiting_email(update, context, db, client_id, client_secret):
     users_message = update.message.text
     chat_id = update.message.chat_id
 
@@ -119,9 +120,9 @@ def waiting_email(update, context):
     regex_email = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'
     if re.fullmatch(regex_email, users_message):
         context.bot.send_message(chat_id=chat_id, text=f"Your email is {users_message}")
-        access_token = get_access_token()
+        access_token = get_access_token(db, client_id, client_secret)
         create_customer(access_token, chat_id, users_message)
-        reply_markup = show_main_menu()
+        reply_markup = show_main_menu(db, client_id, client_secret)
         context.bot.send_message(text="Please choose", chat_id=chat_id, reply_markup=reply_markup)
         return "HANDLE_MENU"
     
@@ -129,8 +130,8 @@ def waiting_email(update, context):
     return "WAITING_EMAIL"
 
 
-def handle_users_reply(update, context):
-    db = get_database_connection()
+def handle_users_reply(update, context, db, client_id, client_secret):
+    
     if update.message:
         user_reply = update.message.text
         chat_id = update.message.chat_id
@@ -154,7 +155,7 @@ def handle_users_reply(update, context):
     state_handler = states_functions[user_state]
 
     try:
-        next_state = state_handler(update, context)
+        next_state = state_handler(update, context, db, client_id, client_secret)
         db.set(chat_id, next_state)
     except Exception as err:
         print(err)
@@ -175,9 +176,13 @@ if __name__ == '__main__':
     env.read_env()
     
     token = env("TELEGRAM_TOKEN")
+    client_id = env("CLIENT_ID")
+    client_secret = env("CLIENT_SECRET")
     updater = Updater(token, use_context=True)
+    db = get_database_connection()
+    handle_users_reply_with_extra_arguments = partial(handle_users_reply, db=db, client_id=client_id, client_secret=client_secret)
     dispatcher = updater.dispatcher
-    dispatcher.add_handler(CallbackQueryHandler(handle_users_reply))
-    dispatcher.add_handler(MessageHandler(Filters.text, handle_users_reply))
-    dispatcher.add_handler(CommandHandler('start', handle_users_reply))
+    dispatcher.add_handler(CallbackQueryHandler(handle_users_reply_with_extra_arguments))
+    dispatcher.add_handler(MessageHandler(Filters.text, handle_users_reply_with_extra_arguments))
+    dispatcher.add_handler(CommandHandler('start', handle_users_reply_with_extra_arguments))
     updater.start_polling()
