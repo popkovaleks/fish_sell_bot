@@ -3,20 +3,19 @@ import json
 import time
 
 
-def is_access_token_expired():
-    try:
-        with open("access_data.json", "r") as access_file:
-            access_data = json.loads(access_file.read())
-            return access_data["expires"] < time.time()
-    except FileNotFoundError:
+def is_access_token_expired(db):
+    if db.exists("access_data") == 1:
+        access_data = json.loads(db.get("access_data"))
+        return access_data["expires"] < time.time()
+    else:
         return True
 
 
-def get_access_token():
-    if is_access_token_expired():
+def get_access_token(db, client_id, client_secret):
+    if is_access_token_expired(db):
         url = "https://api.moltin.com/oauth/access_token"
 
-        payload='client_id=GzfRZv0lswGiw2D56fyxQ8Abw8i2m9s9HJU1xHTgQU&client_secret=MTo6d1YMLqkqLH3CrJWYsz42DpndKJwkCyJP3dWBQT&grant_type=client_credentials'
+        payload=f'client_id={client_id}&client_secret={client_secret}&grant_type=client_credentials'
         headers = {
             'accept': 'application/json',
             'content-type': 'application/x-www-form-urlencoded',
@@ -26,13 +25,12 @@ def get_access_token():
         response = requests.post(url, headers=headers, data=payload)
         response.raise_for_status()
         
-        with open("access_data.json", "w") as access_file:
-            access_file.write(response.text)
+        db.set("access_data", response.text)
+        
         return response.json()["access_token"]
 
-    with open("access_data.json", "r") as access_file:
-        access_data = json.loads(access_file.read())
-        return access_data["access_token"]
+    access_data = json.loads(db.get("access_data"))
+    return access_data["access_token"]
 
 
 def get_products(access_token):
