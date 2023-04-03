@@ -15,7 +15,11 @@ def get_access_token(db, client_id, client_secret):
     if is_access_token_expired(db):
         url = "https://api.moltin.com/oauth/access_token"
 
-        payload=f'client_id={client_id}&client_secret={client_secret}&grant_type=client_credentials'
+        payload = {
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'grant_type': 'client_credentials'
+        }
         headers = {
             'accept': 'application/json',
             'content-type': 'application/x-www-form-urlencoded',
