@@ -52,9 +52,9 @@ def handle_menu(update, context, db, client_id, client_secret):
     chat_id = query.message.chat_id
     menu_msg_id = query.message.message_id
     if query.data == "cart":
-        context.bot.delete_message(message_id=menu_msg_id, chat_id=chat_id)
         cart_text, reply_markup = show_cart(access_token, chat_id)
         context.bot.send_message(text=cart_text, chat_id=chat_id, reply_markup=reply_markup)
+        context.bot.delete_message(message_id=menu_msg_id, chat_id=chat_id)
         return "HANDLE_CART"
     else:
         product = get_product(access_token, query.data.strip())
